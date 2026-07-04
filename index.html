@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes" />
+  <title>3D Kids Learning Playground</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Quicksand',sans-serif; background:#fef9f0; color:#2d3e4f; overflow-x:hidden; }
+    a { text-decoration:none; color:inherit; }
+    button { font-family:inherit; cursor:pointer; border:none; background:none; outline:none; }
+    img { max-width:100%; display:block; }
+    .container { max-width:1300px; margin:0 auto; padding:0 1.5rem; }
+
+    #loader { position:fixed; inset:0; z-index:99999; background:#ffe9d6; display:flex; flex-direction:column; align-items:center; justify-content:center; transition:opacity 0.8s; }
+    #loader.hidden { opacity:0; pointer-events:none; }
+    .loader-spinner { width:70px; height:70px; border-radius:50%; border:12px solid #f9c74f; border-top-color:#f57c9f; animation:spin 0.6s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .loader-text { margin-top:20px; font-weight:700; font-size:1.6rem; }
+
+    .btn-primary { background:#ffb3c6; padding:16px 40px; border-radius:60px; font-weight:700; font-size:1.3rem; color:#2d3e4f; box-shadow:0 10px 0 #d6849a,0 10px 20px rgba(0,0,0,0.1); transition:all 0.08s; display:inline-block; border:3px solid #fff9f0; margin-bottom: 3%; }
+    .btn-primary:active { transform:translateY(6px); box-shadow:0 4px 0 #d6849a; }
+    .btn-secondary { background:#a8d8ea; padding:12px 32px; border-radius:60px; font-weight:600; font-size:1.1rem; color:#1d3b4f; box-shadow:0 6px 0 #6fa6b9; transition:all 0.08s; border:2px solid #fff; }
+    .btn-secondary:active { transform:translateY(4px); box-shadow:0 2px 0 #6fa6b9; }
+    .btn-demo { background:linear-gradient(135deg,#f9c74f,#f57c9f); padding:14px 35px; border-radius:60px; font-weight:700; font-size:1.1rem; color:white; box-shadow:0 6px 20px rgba(245,124,159,0.4); transition:all 0.3s; display:inline-block; border:2px solid #fff; margin-bottom: 5%;}
+    .btn-demo:hover { transform:scale(1.05); box-shadow:0 10px 30px rgba(245,124,159,0.5); }
+
+    .navbar { display:flex; justify-content:space-between; align-items:center; padding:1.2rem 2rem; background:rgba(255,245,235,0.7); backdrop-filter:blur(12px); border-radius:0 0 40px 40px; box-shadow:0 8px 30px rgba(255,180,180,0.15); flex-wrap:wrap; }
+    .logo { font-size:2rem; font-weight:700; color:#f57c9f; text-shadow:4px 4px 0 #ffe0e8; }
+    .logo i { margin-right:10px; color:#f9c74f; }
+    .nav-links { display:flex; gap:2rem; font-weight:600; font-size:1.1rem; flex-wrap:wrap; }
+    .nav-links a { padding:6px 14px; border-radius:40px; transition:background 0.2s; }
+    .nav-links a:hover, .nav-links .active { background:#fcccd9; }
+
+    .hero { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; padding:2rem 0 3rem; }
+    .hero-text { flex:1 1 400px; }
+    .hero-text h1 { font-size:3.5rem; font-weight:700; line-height:1.2; }
+    .hero-text h1 span { background:linear-gradient(135deg,#f9c74f,#f57c9f); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .hero-text p { font-size:1.2rem; margin:1rem 0 2rem; opacity:0.8; }
+    .hero-buttons { display:flex; gap:1rem; flex-wrap:wrap; }
+    .hero-3d { flex:1 1 300px; min-height:300px; background:radial-gradient(circle at 30% 30%, #ffe9d6, #ffd9c7); border-radius:60px; display:flex; align-items:center; justify-content:center; position:relative; }
+    #three-canvas { width:100%; height:350px; border-radius:60px; overflow:hidden; cursor:pointer; }
+
+    .sound-btn-mascot { position:absolute; bottom:15px; right:15px; background:rgba(255,255,255,0.85); border:3px solid #f9c74f; border-radius:50%; width:40px; height:40px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; color:#f57c9f; z-index:20; transition:all 0.3s ease; cursor:pointer; }
+    .sound-btn-mascot:hover { transform:scale(1.1); background:#f9c74f; color:white; }
+
+    .features-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1.5rem; margin:3rem 0; }
+    .feature-item { background:white; padding:1.5rem 1rem; border-radius:50px; text-align:center; border:2px solid rgba(255,255,255,0.8); transition:all 0.3s; font-weight:600; }
+    .feature-item i { font-size:2.8rem; display:block; margin-bottom:8px; color:#f9a8d4; }
+    .feature-item:hover { transform:scale(1.03); background:#fff6f0; }
+
+    .activities-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:1.8rem; margin:2rem 0; }
+    .activity-card { background:white; border-radius:40px; padding:1.8rem 0.8rem; text-align:center; border:3px solid #fff5ed; transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1); font-weight:600; box-shadow:0 12px 25px rgba(255,150,150,0.1); cursor:pointer; }
+    .activity-card:hover { transform:scale(1.05) translateY(-10px); border-color:#f9c74f; box-shadow:0 20px 40px rgba(255,180,180,0.3); }
+    .activity-card i { font-size:3.2rem; color:#f57c9f; margin-bottom:6px; }
+    .activity-card span { display:block; margin-top:4px; }
+
+    .rewards-section { margin:3rem 0; }
+    .rewards-section h2 { font-size:2.4rem; margin-bottom:1.5rem; }
+    .rewards-section h2 i { color:#f57c9f; }
+
+    .rewards-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:1.5rem; margin:1.5rem 0; }
+    .reward-card { background:white; border-radius:40px; padding:1.8rem; text-align:center; border:3px solid #fff5ed; transition:all 0.3s; box-shadow:0 8px 20px rgba(0,0,0,0.04); }
+    .reward-card:hover { transform:translateY(-5px); border-color:#f9c74f; box-shadow:0 16px 40px rgba(255,180,180,0.15); }
+    .reward-card .icon { font-size:3.5rem; display:block; margin-bottom:8px; }
+    .reward-card .count { font-size:2.5rem; font-weight:700; color:#2d3e4f; }
+    .reward-card .label { font-size:1rem; color:#7a6a5e; font-weight:600; }
+
+    .reward-card.stars .icon { color:#f9c74f; }
+    .reward-card.coins .icon { color:#ffb3c6; }
+    .reward-card.badges .icon { color:#a8d8ea; }
+    .reward-card.trophies .icon { color:#ffd700; }
+
+    .progress-section { background:white; border-radius:40px; padding:2rem; margin:2rem 0; border:3px solid #fff5ed; }
+    .progress-section h3 { font-size:1.3rem; margin-bottom:1.5rem; }
+    .progress-bar-container { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+    .progress-item { display:flex; flex-direction:column; gap:5px; }
+    .progress-item .label { font-weight:600; font-size:0.9rem; }
+    .progress-item .bar { width:100%; height:12px; background:#f0f0f0; border-radius:20px; overflow:hidden; }
+    .progress-item .bar .fill { height:100%; border-radius:20px; transition:width 0.8s ease; }
+    .progress-item .bar .fill.star-fill { background:linear-gradient(90deg,#f9c74f,#f57c9f); }
+    .progress-item .bar .fill.coin-fill { background:linear-gradient(90deg,#ffb3c6,#ff6b9d); }
+    .progress-item .bar .fill.badge-fill { background:linear-gradient(90deg,#a8d8ea,#6fa6b9); }
+    .progress-item .bar .fill.trophy-fill { background:linear-gradient(90deg,#ffd700,#f9c74f); }
+    .progress-item .value { font-size:0.8rem; font-weight:600; color:#7a6a5e; }
+
+    .footer { margin-top:3rem; padding:2rem 0; text-align:center; border-top:3px dashed #ffd9c7; color:#7a6a5e; }
+    .footer .socials { display:flex; justify-content:center; gap:1.5rem; font-size:1.8rem; margin:1rem 0; }
+    .footer .socials a { transition:transform 0.2s; }
+    .footer .socials a:hover { transform:scale(1.2); color:#f57c9f; }
+
+    .mascot-speech { position:fixed; bottom:100px; right:20px; background:white; border-radius:30px; padding:12px 20px; box-shadow:0 10px 30px rgba(0,0,0,0.1); border:3px solid #f9c74f; font-weight:600; max-width:200px; z-index:999; display:none; }
+    .mascot-speech::after { content:''; position:absolute; bottom:-15px; right:30px; border-left:15px solid transparent; border-right:15px solid transparent; border-top:15px solid #f9c74f; }
+
+    #activityPopup { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(6px); z-index:9998; align-items:center; justify-content:center; }
+    #activityPopup.active { display:flex; }
+    #activityPopup .popup-card { background:white; border-radius:50px; padding:2rem; max-width:600px; width:90%; max-height:85vh; overflow-y:auto; box-shadow:0 30px 60px rgba(0,0,0,0.2); position:relative; }
+    #activityPopup .popup-card .close-btn { position:absolute; top:15px; right:20px; font-size:2rem; cursor:pointer; color:#2d3e4f; }
+    #activityPopup .popup-card h2 { margin-bottom:1rem; }
+    #activityPopup .popup-card .question { font-size:1.5rem; font-weight:600; margin:1rem 0; }
+    #activityPopup .popup-card .options { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:1.5rem 0; }
+    #activityPopup .popup-card .options button { background:#f0f0f0; padding:1rem; border-radius:30px; font-weight:600; font-size:1.1rem; transition:all 0.2s; border:3px solid transparent; }
+    #activityPopup .popup-card .options button:hover { background:#ffe3d0; border-color:#f9c74f; }
+    #activityPopup .popup-card .options button.correct { background:#b8e6b8; border-color:#6fcf97; }
+    #activityPopup .popup-card .options button.wrong { background:#f9a8d4; border-color:#e74c3c; }
+    #activityPopup .popup-card .options button.color-red { background:#ff4444; color:white; border-color:#cc0000; }
+    #activityPopup .popup-card .options button.color-blue { background:#4444ff; color:white; border-color:#0000cc; }
+    #activityPopup .popup-card .options button.color-green { background:#44cc44; color:white; border-color:#008800; }
+    #activityPopup .popup-card .options button.color-yellow { background:#ffcc00; color:#333; border-color:#cc9900; }
+    #activityPopup .popup-card .score-bar { display:flex; justify-content:space-between; margin-top:1rem; font-weight:600; flex-wrap:wrap; gap:8px; }
+    #activityPopup .popup-card .next-btn { margin-top:1.5rem; width:100%; padding:1rem; border-radius:40px; background:#f9c74f; font-weight:700; font-size:1.2rem; transition:all 0.2s; }
+    #activityPopup .popup-card .next-btn:hover { transform:scale(1.02); }
+    .feedback-emoji { font-size:3rem; text-align:center; margin:0.5rem 0; }
+    .scroll-anim { opacity:0; transform:translateY(40px); }
+
+    /* Video Popup */
+    #videoPopup { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); backdrop-filter:blur(10px); z-index:99999; align-items:center; justify-content:center; animation:fadeIn 0.3s ease; }
+    #videoPopup.active { display:flex; }
+    @keyframes fadeIn { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }
+
+    #videoPopup .modal { background:white; border-radius:40px; padding:20px; max-width:750px; width:90%; position:relative; box-shadow:0 40px 80px rgba(0,0,0,0.3); animation:slideUp 0.4s ease; }
+    @keyframes slideUp { from { opacity:0; transform:translateY(40px); } to { opacity:1; transform:translateY(0); } }
+
+    #videoPopup .modal .close { position:absolute; top:12px; right:18px; font-size:2rem; color:#2d3e4f; cursor:pointer; z-index:10; width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:50%; background:rgba(255,255,255,0.9); transition:all 0.3s; }
+    #videoPopup .modal .close:hover { background:#ffb3c6; transform:rotate(90deg); }
+
+    #videoPopup .modal .popup-title { padding:0 0 12px 0; font-weight:700; font-size:1.2rem; color:#2d3e4f; }
+    #videoPopup .modal .frame { aspect-ratio:16/9; background:#000; border-radius:24px; overflow:hidden; position:relative; }
+    #videoPopup .modal .frame video { width:100%; height:100%; display:block; }
+    #videoPopup .modal .frame iframe { width:100%; height:100%; border:none; }
+
+    @media (max-width:768px) {
+      .navbar { flex-direction:column; gap:1rem; padding:1rem; }
+      .nav-links { justify-content:center; gap:1rem; }
+      .hero-text h1 { font-size:2.5rem; }
+      .hero-3d { min-height:250px; }
+      #three-canvas { height:280px; }
+      .activities-grid { grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:1rem; }
+      .rewards-grid { grid-template-columns:repeat(2,1fr); }
+      .progress-bar-container { grid-template-columns:1fr; }
+      #activityPopup .popup-card { padding:1.5rem; }
+      #activityPopup .popup-card .options { grid-template-columns:1fr; }
+      .hero-buttons { flex-direction:column; gap:0.8rem; }
+      .btn-demo { text-align:center; }
+    }
+    @media (max-width:480px) {
+      .container { padding:0 1rem; }
+      .hero-text h1 { font-size:2rem; }
+      .btn-primary, .btn-demo { padding:12px 24px; font-size:1rem; width:100%; text-align:center; }
+      .hero-3d { min-height:200px; }
+      #three-canvas { height:220px; }
+      .activities-grid { grid-template-columns:repeat(2,1fr); gap:0.8rem; }
+      .activity-card { padding:1.2rem 0.5rem; }
+      .activity-card i { font-size:2.4rem; }
+      .activity-card span { font-size:0.85rem; }
+      .rewards-grid { grid-template-columns:1fr 1fr; gap:0.8rem; }
+      .reward-card { padding:1rem; }
+      .reward-card .icon { font-size:2.5rem; }
+      .reward-card .count { font-size:2rem; }
+      .mascot-speech { bottom:60px; right:5px; max-width:130px; font-size:0.8rem; padding:8px 12px; }
+      #videoPopup .modal { padding:12px; border-radius:30px; }
+      #videoPopup .modal .close { width:32px; height:32px; font-size:1.5rem; top:8px; right:12px; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="loader-spinner"></div>
+  <div class="loader-text">✨ Loading Playground ...</div>
+</div>
+
+<!-- Navbar -->
+<nav class="navbar container">
+  <div class="logo"><i class="fas fa-rocket"></i> KidPlay</div>
+  <div class="nav-links">
+    <a href="#" class="active"><i class="fas fa-home"></i> Home</a>
+    <a href="#activities"><i class="fas fa-puzzle-piece"></i> Activities</a>
+    <a href="#rewards"><i class="fas fa-star"></i> Rewards</a>
+  </div>
+</nav>
+
+<main class="container">
+  <!-- Hero Section -->
+  <section class="hero scroll-anim">
+    <div class="hero-text">
+      <h1>Learn &amp; Play with <span>Magic</span> Friends</h1>
+      <p>🌈 Explore ABC, numbers, shapes &amp; more! Your 3D mascot cheers you on.</p>
+      <div class="hero-buttons">
+        <button class="btn-primary" id="startBtn"><i class="fas fa-play"></i> Start Learning</button>
+        <button class="btn-demo" id="demoBtn"><i class="fas fa-video"></i> Watch Demo</button>
+      </div>
+    </div>
+    <div class="hero-3d">
+      <div id="three-canvas"></div>
+      <button class="sound-btn-mascot" id="muteToggleMascot" title="Toggle Sound">
+        <i class="fas fa-volume-up"></i>
+      </button>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <div class="features-grid scroll-anim">
+    <div class="feature-item"><i class="fas fa-smile"></i> 3D Mascot</div>
+    <div class="feature-item"><i class="fas fa-star"></i> 30+ Activities</div>
+    <div class="feature-item"><i class="fas fa-trophy"></i> Rewards &amp; Badges</div>
+    <div class="feature-item"><i class="fas fa-music"></i> Fun Sounds</div>
+  </div>
+
+  <!-- Activities -->
+  <section id="activities" class="scroll-anim">
+    <h2 style="font-size:2.4rem;margin:2rem 0 1rem;"><i class="fas fa-gamepad" style="color:#f9c74f;"></i> Choose an Activity</h2>
+    <div class="activities-grid" id="activityGrid"></div>
+  </section>
+
+  <!-- Rewards -->
+  <section id="rewards" class="rewards-section scroll-anim">
+    <h2><i class="fas fa-gem"></i> Your Rewards</h2>
+    
+    <div class="rewards-grid" id="rewardsGrid">
+      <div class="reward-card stars">
+        <span class="icon">⭐</span>
+        <div class="count" id="starCount">0</div>
+        <div class="label">Stars</div>
+      </div>
+      <div class="reward-card coins">
+        <span class="icon">🪙</span>
+        <div class="count" id="coinCount">0</div>
+        <div class="label">Coins</div>
+      </div>
+      <div class="reward-card badges">
+        <span class="icon">🎖️</span>
+        <div class="count" id="badgeCount">0</div>
+        <div class="label">Badges</div>
+      </div>
+      <div class="reward-card trophies">
+        <span class="icon">🏆</span>
+        <div class="count" id="trophyCount">0</div>
+        <div class="label">Trophies</div>
+      </div>
+    </div>
+
+    <div class="progress-section">
+      <h3>📊 Your Progress</h3>
+      <div class="progress-bar-container" id="progressContainer">
+        <div class="progress-item">
+          <div class="label">⭐ Stars Progress</div>
+          <div class="bar">
+            <div class="fill star-fill" id="starProgress" style="width:0%"></div>
+          </div>
+          <div class="value" id="starProgressText">0 / 100</div>
+        </div>
+        <div class="progress-item">
+          <div class="label">🪙 Coins Progress</div>
+          <div class="bar">
+            <div class="fill coin-fill" id="coinProgress" style="width:0%"></div>
+          </div>
+          <div class="value" id="coinProgressText">0 / 100</div>
+        </div>
+        <div class="progress-item">
+          <div class="label">🎖️ Badges Progress</div>
+          <div class="bar">
+            <div class="fill badge-fill" id="badgeProgress" style="width:0%"></div>
+          </div>
+          <div class="value" id="badgeProgressText">0 / 10</div>
+        </div>
+        <div class="progress-item">
+          <div class="label">🏆 Trophies Progress</div>
+          <div class="bar">
+            <div class="fill trophy-fill" id="trophyProgress" style="width:0%"></div>
+          </div>
+          <div class="value" id="trophyProgressText">0 / 5</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:1.5rem;" id="achievementBadges">
+      <div class="card" style="flex:1;min-width:150px;background:#fef3d7;border-color:#f9c74f;padding:1rem;border-radius:30px;">
+        <i class="fas fa-check-circle" style="color:#6fcf97;"></i> 
+        <span id="achBadge1">🔒 Beginner</span>
+      </div>
+      <div class="card" style="flex:1;min-width:150px;background:#fef3d7;border-color:#f9c74f;padding:1rem;border-radius:30px;">
+        <i class="fas fa-check-circle" style="color:#6fcf97;"></i> 
+        <span id="achBadge2">🔒 Explorer</span>
+      </div>
+      <div class="card" style="flex:1;min-width:150px;background:#fef3d7;border-color:#f9c74f;padding:1rem;border-radius:30px;">
+        <i class="fas fa-check-circle" style="color:#6fcf97;"></i> 
+        <span id="achBadge3">🔒 Champion</span>
+      </div>
+    </div>
+
+    <button id="claimDailyBtn" class="btn-secondary" style="margin-top:1.5rem;display:inline-block;">
+      <i class="fas fa-gift"></i> Claim Daily Reward
+    </button>
+  </section>
+
+  <!-- Testimonial -->
+  <div class="card scroll-anim" style="margin:2rem 0;background:#fef7f0;padding:2rem;border-radius:40px;">
+    <p style="font-size:1.3rem;">⭐ “My daughter loves the dancing mascot! She learned her ABCs in a week.” — Sarah, mom of 5yo</p>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer scroll-anim">
+    <div class="socials">
+      <a href="https://github.com/yousafzai05" target="_blank"><i class="fab fa-github"></i></a>
+      <a href="https://www.linkedin.com/in/marjan-yousafzai/" target="_blank"><i class="fab fa-linkedin"></i></a>
+      <a href="mailto:yosafzaimarjan05@gmail.com"><i class="fas fa-envelope"></i></a>
+    </div>
+    <p>© 2026 Marjan Yousafzai. All Rights Reserved. 🌈</p>
+    <button id="backToTop" style="margin-top:10px;font-size:1.2rem;background:#f9c74f;padding:8px 20px;border-radius:40px;font-weight:600;">⬆ Back to Top</button>
+  </footer>
+</main>
+
+<!-- Video Popup -->
+<div id="videoPopup">
+  <div class="modal">
+    <span class="close" id="closeVideo">&times;</span>
+    <div class="popup-title" id="videoPopupTitle">🎬 Counting Numbers from 1-10</div>
+    <div class="frame">
+      <video id="demoVideo" controls style="width:100%;height:100%;">
+        <source src="one_ten_song.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </div>
+  </div>
+</div>
+
+<!-- Mascot Speech -->
+<div class="mascot-speech" id="mascotSpeech">👋 Hello! Let's learn!</div>
+
+<!-- Activity Popup -->
+<div id="activityPopup">
+  <div class="popup-card">
+    <span class="close-btn" id="closeActivityPopup">&times;</span>
+    <h2 id="activityTitle">Activity</h2>
+    <div id="activityContent">
+      <div class="question" id="questionText">Question</div>
+      <div class="options" id="optionsContainer"></div>
+      <div class="feedback-emoji" id="feedbackEmoji"></div>
+      <div class="score-bar">
+        <span>⭐ Score: <span id="scoreDisplay">0</span></span>
+        <span>❤️ Lives: <span id="livesDisplay">3</span></span>
+        <span>📊 Level: <span id="levelDisplay">1</span></span>
+      </div>
+      <button class="next-btn" id="nextQuestionBtn">Next ➜</button>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+  { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/" } }
+</script>
+<script type="module">
+  // ================================================================
+  // IMPORTS
+  // ================================================================
+  import * as THREE from 'three';
+  import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+  // ================================================================
+  // LOADING
+  // ================================================================
+  window.addEventListener('load', () => { setTimeout(() => { document.getElementById('loader').classList.add('hidden'); }, 600); });
+
+  // ================================================================
+  // 3D SCENE
+  // ================================================================
+  const container = document.getElementById('three-canvas');
+  const scene = new THREE.Scene(); 
+  scene.background = new THREE.Color(0xffe9d6);
+  
+  const camera = new THREE.PerspectiveCamera(45, container.clientWidth/container.clientHeight, 0.1, 1000);
+  camera.position.set(2,2,5); camera.lookAt(0,0.5,0);
+  
+  const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.shadowMap.enabled = true;
+  container.appendChild(renderer.domElement);
+  
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableZoom = false;
+  controls.enablePan = false;
+  controls.autoRotate = true;
+  controls.autoRotateSpeed = 1.5;
+  controls.target.set(0,0.8,0);
+
+  // Lights
+  const ambient = new THREE.AmbientLight(0xffffff,0.7); scene.add(ambient);
+  const dirLight = new THREE.DirectionalLight(0xfff5e6,1); dirLight.position.set(3,6,4); dirLight.castShadow = true; scene.add(dirLight);
+  const fillLight = new THREE.DirectionalLight(0xffd0b0,0.5); fillLight.position.set(-3,2,3); scene.add(fillLight);
+  
+  // Ground
+  const ground = new THREE.Mesh(
+    new THREE.CircleGeometry(3,32),
+    new THREE.MeshStandardMaterial({ color:0xffd9c7, transparent:true, opacity:0.3, side:THREE.DoubleSide })
+  );
+  ground.rotation.x = -Math.PI/2;
+  ground.position.y = -0.3;
+  scene.add(ground);
+
+  // Mascot
+  const mascot = new THREE.Group();
+  
+  // Body
+  const body = new THREE.Mesh(
+    new THREE.SphereGeometry(0.8,24,24),
+    new THREE.MeshStandardMaterial({ color:0xff6b9d, emissive:0xff8fb3, emissiveIntensity:0.2 })
+  );
+  body.position.y = 0.8;
+  body.castShadow = true;
+  mascot.add(body);
+  
+  // Head
+  const head = new THREE.Mesh(
+    new THREE.SphereGeometry(0.6,24,24),
+    new THREE.MeshStandardMaterial({ color:0xffddaa })
+  );
+  head.position.set(0,1.6,0.1);
+  head.castShadow = true;
+  mascot.add(head);
+  
+  // Eyes
+  const eyePositions = [[-0.22,1.7,0.5],[0.22,1.7,0.5]];
+  eyePositions.forEach(pos => {
+    const white = new THREE.Mesh(new THREE.SphereGeometry(0.14,16), new THREE.MeshStandardMaterial({ color:0xffffff }));
+    white.position.set(pos[0], pos[1], pos[2]);
+    mascot.add(white);
+    const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.08,16), new THREE.MeshStandardMaterial({ color:0x2d3e4f }));
+    pupil.position.set(pos[0]+0.05, pos[1]-0.02, pos[2]+0.1);
+    mascot.add(pupil);
+  });
+  
+  // Smile
+  const smile = new THREE.Mesh(
+    new THREE.TorusGeometry(0.15,0.04,8,16,Math.PI),
+    new THREE.MeshStandardMaterial({ color:0xff3366 })
+  );
+  smile.position.set(0,1.5,0.55);
+  smile.rotation.x = 0.1;
+  mascot.add(smile);
+  
+  // Hat
+  const hat = new THREE.Mesh(
+    new THREE.ConeGeometry(0.4,0.45,8),
+    new THREE.MeshStandardMaterial({ color:0xffd700, emissive:0xffea00, emissiveIntensity:0.1 })
+  );
+  hat.position.set(0,2.05,0.1);
+  mascot.add(hat);
+  
+  // Pompon
+  const pompon = new THREE.Mesh(
+    new THREE.SphereGeometry(0.12,8),
+    new THREE.MeshStandardMaterial({ color:0xff6b9d, emissive:0xff8fb3, emissiveIntensity:0.2 })
+  );
+  pompon.position.set(0,2.3,0.1);
+  mascot.add(pompon);
+  
+  // Arms
+  const armMat = new THREE.MeshStandardMaterial({ color:0xffddaa });
+  const armPositions = [[-0.85,1.2,0],[0.85,1.2,0]];
+  armPositions.forEach((pos, i) => {
+    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,0.5,8), armMat);
+    arm.position.set(pos[0], pos[1], pos[2]);
+    arm.rotation.z = i === 0 ? 0.3 : -0.3;
+    mascot.add(arm);
+  });
+  
+  // Legs
+  const legMat = new THREE.MeshStandardMaterial({ color:0xff6b9d });
+  const legPositions = [[-0.3,0.3,0],[0.3,0.3,0]];
+  legPositions.forEach(pos => {
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.12,0.4,8), legMat);
+    leg.position.set(pos[0], pos[1], pos[2]);
+    mascot.add(leg);
+  });
+  
+  // Blush
+  const blushMat = new THREE.MeshStandardMaterial({ color:0xff6699, transparent:true, opacity:0.3 });
+  const blushPositions = [[-0.28,1.45,0.45],[0.28,1.45,0.45]];
+  blushPositions.forEach(pos => {
+    const blush = new THREE.Mesh(new THREE.SphereGeometry(0.1,8), blushMat);
+    blush.position.set(pos[0], pos[1], pos[2]);
+    mascot.add(blush);
+  });
+  
+  scene.add(mascot);
+
+  // Particles
+  const particleCount = 60;
+  const pGeo = new THREE.BufferGeometry();
+  const pPos = new Float32Array(particleCount * 3);
+  const pColors = new Float32Array(particleCount * 3);
+  const colorPalette = [0xff6b9d, 0xffd700, 0xff8fb3, 0xffea00];
+  for (let i = 0; i < particleCount * 3; i += 3) {
+    const r = 2.8, theta = Math.random() * Math.PI * 2, phi = Math.random() * Math.PI * 2;
+    pPos[i] = Math.sin(theta) * Math.cos(phi) * r;
+    pPos[i+1] = Math.sin(theta) * Math.sin(phi) * r + 1.2;
+    pPos[i+2] = Math.cos(theta) * r;
+    const c = new THREE.Color(colorPalette[Math.floor(Math.random() * colorPalette.length)]);
+    pColors[i] = c.r; pColors[i+1] = c.g; pColors[i+2] = c.b;
+  }
+  pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+  pGeo.setAttribute('color', new THREE.BufferAttribute(pColors, 3));
+  const particles = new THREE.Points(pGeo, new THREE.PointsMaterial({
+    size: 0.08,
+    transparent: true,
+    opacity: 0.7,
+    blending: THREE.AdditiveBlending,
+    vertexColors: true
+  }));
+  scene.add(particles);
+
+  // Animation
+  let time = 0;
+  function animate() {
+    requestAnimationFrame(animate);
+    time += 0.02;
+    mascot.position.y = Math.sin(time * 1.2) * 0.04;
+    mascot.rotation.y = Math.sin(time * 0.3) * 0.08;
+    particles.rotation.y += 0.002;
+    controls.update();
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.addEventListener('resize', () => {
+    const w = container.clientWidth, h = container.clientHeight;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+  });
+
+  // ================================================================
+  // GSAP SCROLL
+  // ================================================================
+  gsap.registerPlugin(ScrollTrigger);
+  document.querySelectorAll('.scroll-anim').forEach(el => {
+    gsap.fromTo(el, { opacity:0, y:50 }, {
+      opacity:1, y:0, duration:0.9, ease:'power2.out',
+      scrollTrigger: { trigger:el, start:'top 85%', toggleActions:'play none none none' }
+    });
+  });
+
+  // ================================================================
+  // ACTIVITY DATA
+  // ================================================================
+  const activityData = {
+    'Alphabet Adventure': {
+      questions: [
+        { q: 'Which letter comes after A?', options: ['A', 'B', 'C', 'D'], correct: 1 },
+        { q: 'What is the first letter of "Cat"?', options: ['C', 'A', 'T', 'K'], correct: 0 },
+        { q: 'Which letter is in the middle of "A" and "C"?', options: ['A', 'B', 'D', 'E'], correct: 1 },
+        { q: 'How many letters in "DOG"?', options: ['2', '3', '4', '5'], correct: 1 }
+      ]
+    },
+    'ABC Tracing': {
+      questions: [
+        { q: 'Trace "B". Which is "B"?', options: ['A', 'B', 'C', 'D'], correct: 1 },
+        { q: 'Trace "M". Which is "M"?', options: ['N', 'M', 'O', 'P'], correct: 1 },
+        { q: 'Find "Z".', options: ['Y', 'Z', 'X', 'W'], correct: 1 }
+      ]
+    },
+    'Letter Recognition': {
+      questions: [
+        { q: '"5" is a letter or number?', options: ['Letter', 'Number', 'Both', 'Neither'], correct: 1 },
+        { q: 'Which is a vowel?', options: ['B', 'C', 'A', 'D'], correct: 2 },
+        { q: 'How many letters in "CAT"?', options: ['2', '3', '4', '5'], correct: 1 }
+      ]
+    },
+    'Alphabet Sounds': {
+      questions: [
+        { q: 'Sound of "A"?', options: ['ah', 'bee', 'see', 'dee'], correct: 0 },
+        { q: 'Sound of "M"?', options: ['mmm', 'nnn', 'ooo', 'ppp'], correct: 0 },
+        { q: 'Which sounds like "sss"?', options: ['S', 'T', 'U', 'V'], correct: 0 }
+      ]
+    },
+    'Word Builder': {
+      questions: [
+        { q: 'Build "C A T"', options: ['CAT', 'DOG', 'RAT', 'BAT'], correct: 0 },
+        { q: 'Build "D O G"', options: ['CAT', 'DOG', 'HOG', 'LOG'], correct: 1 },
+        { q: 'Build "S U N"', options: ['SUN', 'RUN', 'FUN', 'NUN'], correct: 0 }
+      ]
+    },
+    'Sight Words': {
+      questions: [
+        { q: 'Which is "THE"?', options: ['THE', 'THAT', 'THIS', 'THEN'], correct: 0 },
+        { q: 'Find "AND"', options: ['AND', 'ANT', 'ADD', 'ALL'], correct: 0 },
+        { q: 'Which is "YOU"?', options: ['YOU', 'YOUR', 'OUR', 'YET'], correct: 0 }
+      ]
+    },
+    'Phonics': {
+      questions: [
+        { q: 'What sound does "ph" make?', options: ['f', 'p', 'h', 'ph'], correct: 0 },
+        { q: 'Sound of "ch"?', options: ['ch', 'sh', 'th', 'wh'], correct: 0 },
+        { q: 'Starts with "th"?', options: ['THREE', 'TREE', 'FREE', 'GREE'], correct: 0 }
+      ]
+    },
+    'Number Counting': {
+      questions: [
+        { q: 'Count: 🍎🍎🍎 How many?', options: ['2', '3', '4', '5'], correct: 1 },
+        { q: 'Count: ⭐⭐⭐⭐', options: ['3', '4', '5', '6'], correct: 1 },
+        { q: 'Fingers on one hand?', options: ['4', '5', '6', '7'], correct: 1 }
+      ]
+    },
+    'Number Recognition': {
+      questions: [
+        { q: 'Which number is "7"?', options: ['5', '6', '7', '8'], correct: 2 },
+        { q: 'What comes after 9?', options: ['8', '9', '10', '11'], correct: 2 },
+        { q: 'Which is "2"?', options: ['1', '2', '3', '4'], correct: 1 }
+      ]
+    },
+    'Addition': {
+      questions: [
+        { q: '2 + 3 = ?', options: ['4', '5', '6', '7'], correct: 1 },
+        { q: '5 + 5 = ?', options: ['9', '10', '11', '12'], correct: 1 },
+        { q: '1 + 1 = ?', options: ['1', '2', '3', '4'], correct: 1 }
+      ]
+    },
+    'Subtraction': {
+      questions: [
+        { q: '5 - 2 = ?', options: ['2', '3', '4', '5'], correct: 1 },
+        { q: '10 - 3 = ?', options: ['6', '7', '8', '9'], correct: 1 },
+        { q: '3 - 1 = ?', options: ['1', '2', '3', '4'], correct: 1 }
+      ]
+    },
+    'Multiplication Basics': {
+      questions: [
+        { q: '2 x 2 = ?', options: ['2', '3', '4', '5'], correct: 2 },
+        { q: '3 x 1 = ?', options: ['2', '3', '4', '5'], correct: 1 },
+        { q: '2 x 3 = ?', options: ['4', '5', '6', '7'], correct: 2 }
+      ]
+    },
+    'Shape Matching': {
+      questions: [
+        { q: 'Which has 4 equal sides?', options: ['Square', 'Circle', 'Triangle', 'Star'], correct: 0 },
+        { q: 'Which is round?', options: ['Square', 'Circle', 'Triangle', 'Star'], correct: 1 },
+        { q: 'Sides of a triangle?', options: ['2', '3', '4', '5'], correct: 1 }
+      ]
+    },
+    'Color Matching': {
+      questions: [
+        { q: 'What color is the sky?', options: ['Red', 'Blue', 'Green', 'Yellow'], correct: 1, color: true },
+        { q: 'Color of bananas?', options: ['Red', 'Blue', 'Green', 'Yellow'], correct: 3, color: true },
+        { q: 'Color of grass?', options: ['Red', 'Blue', 'Green', 'Yellow'], correct: 2, color: true }
+      ]
+    },
+    'Animal Quiz': {
+      questions: [
+        { q: 'Says "Moo"?', options: ['Cat', 'Dog', 'Cow', 'Horse'], correct: 2 },
+        { q: 'Can fly?', options: ['Bird', 'Fish', 'Cat', 'Dog'], correct: 0 },
+        { q: 'Lives in water?', options: ['Lion', 'Fish', 'Eagle', 'Monkey'], correct: 1 }
+      ]
+    },
+    'Animal Sounds': {
+      questions: [
+        { q: 'Dog sound?', options: ['Meow', 'Woof', 'Moo', 'Roar'], correct: 1 },
+        { q: 'Cat sound?', options: ['Meow', 'Woof', 'Moo', 'Roar'], correct: 0 },
+        { q: 'Lion sound?', options: ['Meow', 'Woof', 'Moo', 'Roar'], correct: 3 }
+      ]
+    },
+    'Fruit Match': {
+      questions: [
+        { q: 'Red and round?', options: ['Banana', 'Apple', 'Orange', 'Grape'], correct: 1 },
+        { q: 'Yellow and long?', options: ['Banana', 'Apple', 'Orange', 'Grape'], correct: 0 },
+        { q: 'Orange fruit?', options: ['Banana', 'Apple', 'Orange', 'Grape'], correct: 2 }
+      ]
+    },
+    'Vegetable Match': {
+      questions: [
+        { q: 'Orange vegetable?', options: ['Broccoli', 'Carrot', 'Peas', 'Corn'], correct: 1 },
+        { q: 'Green tree-like?', options: ['Broccoli', 'Carrot', 'Peas', 'Corn'], correct: 0 },
+        { q: 'Yellow vegetable?', options: ['Broccoli', 'Carrot', 'Peas', 'Corn'], correct: 3 }
+      ]
+    },
+    'Memory Cards': {
+      questions: [
+        { q: 'Pair: A and ?', options: ['B', 'A', 'C', 'D'], correct: 1 },
+        { q: 'Match 2 and ?', options: ['1', '2', '3', '4'], correct: 1 },
+        { q: 'Pair "⭐" with ?', options: ['🌟', '⭐', '✨', '💫'], correct: 1 }
+      ]
+    },
+    'Puzzle Builder': {
+      questions: [
+        { q: 'Which piece fits?', options: ['1', '2', '3', '4'], correct: 0 },
+        { q: 'Completes the puzzle?', options: ['A', 'B', 'C', 'D'], correct: 0 },
+        { q: 'Missing piece?', options: ['W', 'X', 'Y', 'Z'], correct: 0 }
+      ]
+    },
+    'Drag & Drop': {
+      questions: [
+        { q: 'Drag "A" - Which is "A"?', options: ['A', 'B', 'C', 'D'], correct: 0 },
+        { q: 'Drag "2" - Which is "2"?', options: ['1', '2', '3', '4'], correct: 1 },
+        { q: 'Drag "⭐"', options: ['🌟', '⭐', '✨', '💫'], correct: 1 }
+      ]
+    },
+    'Odd One Out': {
+      questions: [
+        { q: 'Not a fruit?', options: ['Apple', 'Carrot', 'Banana', 'Orange'], correct: 1 },
+        { q: 'Not a color?', options: ['Red', 'Blue', 'Jump', 'Green'], correct: 2 },
+        { q: 'Not an animal?', options: ['Cat', 'Dog', 'Book', 'Cow'], correct: 2 }
+      ]
+    },
+    'Pattern Recognition': {
+      questions: [
+        { q: 'Next: Red, Blue, Red, Blue, ?', options: ['Red', 'Blue', 'Green', 'Yellow'], correct: 0 },
+        { q: 'Next: 1, 2, 3, 4, ?', options: ['4', '5', '6', '7'], correct: 1 },
+        { q: 'Next: A, B, C, D, ?', options: ['A', 'B', 'C', 'E'], correct: 3 }
+      ]
+    },
+    'Clock Learning': {
+      questions: [
+        { q: 'Hour hand at 3?', options: ['2:00', '3:00', '4:00', '5:00'], correct: 1 },
+        { q: 'Minutes in an hour?', options: ['30', '45', '60', '90'], correct: 2 },
+        { q: 'What is 12:00?', options: ['Morning', 'Noon', 'Night', 'Evening'], correct: 1 }
+      ]
+    },
+    'Weather Learning': {
+      questions: [
+        { q: 'What falls when it rains?', options: ['Sun', 'Clouds', 'Raindrops', 'Snow'], correct: 2 },
+        { q: 'Hottest weather?', options: ['Sunny', 'Rainy', 'Cloudy', 'Snowy'], correct: 0 },
+        { q: 'Falls in winter?', options: ['Rain', 'Snow', 'Sun', 'Wind'], correct: 1 }
+      ]
+    },
+    'Solar System': {
+      questions: [
+        { q: 'Closest to sun?', options: ['Earth', 'Mercury', 'Venus', 'Mars'], correct: 1 },
+        { q: 'Red Planet?', options: ['Earth', 'Mars', 'Jupiter', 'Saturn'], correct: 1 },
+        { q: 'Number of planets?', options: ['7', '8', '9', '10'], correct: 1 }
+      ]
+    },
+    'Body Parts': {
+      questions: [
+        { q: 'What do we see with?', options: ['Ears', 'Eyes', 'Nose', 'Mouth'], correct: 1 },
+        { q: 'What do we hear with?', options: ['Ears', 'Eyes', 'Nose', 'Mouth'], correct: 0 },
+        { q: 'Fingers on one hand?', options: ['4', '5', '6', '7'], correct: 1 }
+      ]
+    },
+    'Transportation': {
+      questions: [
+        { q: 'Has wheels and flies?', options: ['Car', 'Plane', 'Boat', 'Train'], correct: 1 },
+        { q: 'Travels on water?', options: ['Car', 'Plane', 'Boat', 'Train'], correct: 2 },
+        { q: 'Runs on tracks?', options: ['Car', 'Plane', 'Boat', 'Train'], correct: 3 }
+      ]
+    },
+    'Community Helpers': {
+      questions: [
+        { q: 'Puts out fires?', options: ['Teacher', 'Firefighter', 'Doctor', 'Police'], correct: 1 },
+        { q: 'Teaches kids?', options: ['Teacher', 'Firefighter', 'Doctor', 'Police'], correct: 0 },
+        { q: 'Helps sick people?', options: ['Teacher', 'Firefighter', 'Doctor', 'Police'], correct: 2 }
+      ]
+    },
+    'Drawing Board': {
+      questions: [
+        { q: 'Color of sun?', options: ['Red', 'Blue', 'Yellow', 'Green'], correct: 2 },
+        { q: 'Shape of a ball?', options: ['Square', 'Circle', 'Triangle', 'Star'], correct: 1 },
+        { q: 'Color of sky?', options: ['Red', 'Blue', 'Yellow', 'Green'], correct: 1 }
+      ]
+    }
+  };
+
+  // ================================================================
+  // BUILD ACTIVITY CARDS
+  // ================================================================
+  const activityNames = Object.keys(activityData);
+  const grid = document.getElementById('activityGrid');
+  const icons = ['fa-font','fa-pencil-alt','fa-font','fa-music','fa-spell-check','fa-eye','fa-headphones','fa-calculator','fa-sort-numeric-up','fa-plus-circle','fa-minus-circle','fa-times-circle','fa-shapes','fa-palette','fa-paw','fa-volume-up','fa-apple-alt','fa-carrot','fa-brain','fa-puzzle-piece','fa-arrows-alt','fa-question-circle','fa-chart-line','fa-clock','fa-cloud-sun','fa-rocket','fa-heart','fa-bus','fa-users','fa-paint-brush'];
+  const colors = ['#f9c74f','#a8d8ea','#f9a8d4','#b8e6b8','#f7c6a0','#f5a0a0','#c9b0e6','#ffb09c','#7fc7d9','#e6b8b8','#e6c9a0','#f9c74f','#a8d8ea','#f9a8d4','#b8e6b8','#f7c6a0','#f5a0a0','#c9b0e6','#ffb09c','#7fc7d9','#e6b8b8','#e6c9a0','#f9c74f','#a8d8ea','#f9a8d4','#b8e6b8','#f7c6a0','#f5a0a0','#c9b0e6','#ffb09c'];
+
+  activityNames.forEach((name, idx) => {
+    const card = document.createElement('div');
+    card.className = 'activity-card';
+    const icon = icons[idx % icons.length];
+    const color = colors[idx % colors.length];
+    card.innerHTML = `<i class="fas ${icon}" style="color:${color};"></i><span>${name}</span>`;
+    card.addEventListener('click', () => openActivity(name));
+    grid.appendChild(card);
+  });
+
+  // ================================================================
+  // SOUND SYSTEM
+  // ================================================================
+  class SoundSystem {
+    constructor() {
+      this.audioContext = null;
+      this.muted = false;
+      this.volume = 0.5;
+      this.initialized = false;
+      this.hoverInterval = null;
+      this.isHovering = false;
+      this.bgInterval = null;
+    }
+
+    init() {
+      if (this.initialized) return;
+      try {
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        this.initialized = true;
+      } catch (e) { console.warn('Audio not supported'); }
+    }
+
+    playTone(freq, duration = 0.2, type = 'sine', vol = 0.5) {
+      if (!this.initialized || this.muted) return;
+      try {
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, this.audioContext.currentTime);
+        gain.gain.setValueAtTime(vol * this.volume, this.audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(this.audioContext.destination);
+        osc.start();
+        osc.stop(this.audioContext.currentTime + duration);
+      } catch (e) {}
+    }
+
+    click() { this.init(); this.playTone(800,0.08,'sine',0.3); setTimeout(()=>this.playTone(1000,0.06,'sine',0.2),80); }
+    hover() { this.init(); this.playTone(600,0.05,'sine',0.15); }
+    
+    startHover() {
+      if (this.isHovering || this.muted) return;
+      this.isHovering = true;
+      let count = 0;
+      if (this.hoverInterval) clearInterval(this.hoverInterval);
+      this.hoverInterval = setInterval(() => {
+        if (this.isHovering && !this.muted && this.initialized) {
+          this.playTone(500 + Math.sin(count)*50, 0.1, 'sine', 0.05);
+          count++;
+        } else { this.stopHover(); }
+      }, 1500);
+    }
+
+    stopHover() {
+      this.isHovering = false;
+      if (this.hoverInterval) { clearInterval(this.hoverInterval); this.hoverInterval = null; }
+    }
+
+    correct() { this.init(); this.playTone(523,0.15,'sine',0.4); setTimeout(()=>this.playTone(659,0.15,'sine',0.4),150); setTimeout(()=>this.playTone(784,0.2,'sine',0.4),300); }
+    wrong() { this.init(); this.playTone(400,0.2,'sawtooth',0.2); setTimeout(()=>this.playTone(300,0.3,'sawtooth',0.2),200); }
+    celebrate() { this.init(); [523,587,659,784,880,988,1047].forEach((n,i)=>setTimeout(()=>this.playTone(n,0.15,'sine',0.3),i*80)); }
+    reward() { this.init(); this.playTone(1200,0.1,'sine',0.3); setTimeout(()=>this.playTone(1500,0.15,'sine',0.3),100); setTimeout(()=>this.playTone(1800,0.2,'sine',0.3),200); }
+    gameOver() { this.init(); this.playTone(300,0.3,'sawtooth',0.2); setTimeout(()=>this.playTone(250,0.4,'sawtooth',0.2),300); }
+
+    playBg() {
+      if (this.bgInterval) return;
+      this.init();
+      let idx = 0;
+      const notes = [262,294,330,349,392,440,494,523];
+      this.bgInterval = setInterval(() => {
+        if (!this.muted && this.initialized) {
+          this.playTone(notes[idx % notes.length], 0.3, 'sine', 0.06);
+          idx++;
+          if (idx % 4 === 0) setTimeout(()=>this.playTone(notes[idx % notes.length]*1.5,0.3,'sine',0.04),150);
+        }
+      }, 400);
+    }
+
+    stopBg() { if (this.bgInterval) { clearInterval(this.bgInterval); this.bgInterval = null; } }
+
+    toggleMute() {
+      this.muted = !this.muted;
+      if (this.muted) { this.stopBg(); this.stopHover(); }
+      else { this.playBg(); }
+      return this.muted;
+    }
+  }
+
+  // ================================================================
+  // INITIALIZE SOUND
+  // ================================================================
+  const sound = new SoundSystem();
+  document.addEventListener('click', () => sound.init(), { once: true });
+  document.addEventListener('touchstart', () => sound.init(), { once: true });
+
+  // ================================================================
+  // MUTE BUTTON
+  // ================================================================
+  const muteBtn = document.getElementById('muteToggleMascot');
+  let isMuted = false;
+  muteBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    sound.init();
+    isMuted = sound.toggleMute();
+    muteBtn.innerHTML = isMuted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
+    if (!isMuted) sound.playBg();
+  });
+  document.addEventListener('click', () => { if (!isMuted) sound.playBg(); }, { once: true });
+
+  // ================================================================
+  // ACTIVITY POPUP
+  // ================================================================
+  const popup = document.getElementById('activityPopup');
+  const closePopup = document.getElementById('closeActivityPopup');
+  const titleEl = document.getElementById('activityTitle');
+  const questionEl = document.getElementById('questionText');
+  const optionsEl = document.getElementById('optionsContainer');
+  const feedbackEl = document.getElementById('feedbackEmoji');
+  const scoreEl = document.getElementById('scoreDisplay');
+  const livesEl = document.getElementById('livesDisplay');
+  const levelEl = document.getElementById('levelDisplay');
+  const nextBtn = document.getElementById('nextQuestionBtn');
+
+  let currentActivity = null;
+  let currentQIndex = 0;
+  let score = 0;
+  let lives = 3;
+  let level = 1;
+  let answered = false;
+
+  function getColorClass(c) {
+    const map = { 'Red':'color-red', 'Blue':'color-blue', 'Green':'color-green', 'Yellow':'color-yellow' };
+    return map[c] || '';
+  }
+
+  function showSpeech(msg, dur = 3000) {
+    const b = document.getElementById('mascotSpeech');
+    b.textContent = msg;
+    b.style.display = 'block';
+    gsap.fromTo(b, { opacity:0, y:20 }, {
+      opacity:1, y:0, duration:0.6,
+      onComplete: () => { setTimeout(() => { b.style.display = 'none'; }, dur); }
+    });
+  }
+
+  function openActivity(name) {
+    sound.init(); sound.click();
+    const data = activityData[name];
+    if (!data) return;
+    currentActivity = data;
+    currentQIndex = 0;
+    score = 0;
+    lives = 3;
+    level = 1;
+    answered = false;
+    titleEl.textContent = name;
+    popup.classList.add('active');
+    renderQuestion();
+    gsap.to(mascot.rotation, { z:0.4, duration:0.2, yoyo:true, repeat:2 });
+    const speech = new SpeechSynthesisUtterance(`Let's play ${name}`);
+    speech.lang = 'en-US'; speechSynthesis.speak(speech);
+    showSpeech(`🎮 Let's play ${name}!`, 2500);
+  }
+
+  function renderQuestion() {
+    const data = currentActivity;
+    if (!data || currentQIndex >= data.questions.length) {
+      questionEl.textContent = '🎉 Great job! You completed the activity!';
+      optionsEl.innerHTML = '';
+      feedbackEl.textContent = '🏆';
+      nextBtn.textContent = 'Finish';
+      sound.celebrate();
+      showSpeech('🏆 You\'re a champion!', 3000);
+      nextBtn.onclick = () => { popup.classList.remove('active'); };
+      
+      const rewards = getRewards();
+      const bonusStars = Math.floor(score / 10) + 5;
+      const bonusCoins = Math.floor(score / 5) + 10;
+      rewards.stars += bonusStars;
+      rewards.coins += bonusCoins;
+      if (score >= 40) { rewards.badges += 1; }
+      if (score >= 60) { rewards.trophies += 1; }
+      saveRewards(rewards);
+      updateRewardsDisplay();
+      
+      for (let i=0;i<30;i++) {
+        const el = document.createElement('div');
+        el.style.cssText = `position:fixed;pointer-events:none;z-index:9999;width:10px;height:10px;border-radius:50%;background:${['#f9c74f','#f57c9f','#a8d8ea','#b8e6b8','#ffb3c6'][Math.floor(Math.random()*5)]};top:-10px;left:${Math.random()*100}vw;`;
+        document.body.appendChild(el);
+        gsap.to(el, { y:window.innerHeight+100, rotation:720, duration:2+Math.random(), ease:'power2.in', onComplete:()=>el.remove() });
+      }
+      return;
+    }
+    const q = data.questions[currentQIndex];
+    questionEl.textContent = q.q;
+    feedbackEl.textContent = '';
+    answered = false;
+    optionsEl.innerHTML = '';
+    const isColor = titleEl.textContent === 'Color Matching' || q.color === true;
+    q.options.forEach((opt, idx) => {
+      const btn = document.createElement('button');
+      btn.textContent = opt;
+      btn.dataset.idx = idx;
+      if (isColor) { const cls = getColorClass(opt); if (cls) btn.className = cls; }
+      btn.addEventListener('click', () => handleAnswer(idx, q.correct, btn));
+      optionsEl.appendChild(btn);
+    });
+    scoreEl.textContent = score;
+    livesEl.textContent = lives;
+    levelEl.textContent = level;
+    nextBtn.textContent = 'Next ➜';
+    nextBtn.onclick = () => {
+      if (!answered) {
+        lives -= 1; livesEl.textContent = lives;
+        sound.wrong();
+        showSpeech('🤔 Take your time!', 2000);
+        if (lives <= 0) {
+          questionEl.textContent = '💔 Oh no! Try again.';
+          optionsEl.innerHTML = '';
+          feedbackEl.textContent = '😢';
+          nextBtn.textContent = 'Restart';
+          sound.gameOver();
+          showSpeech('😢 Don\'t give up! Try again!', 2500);
+          nextBtn.onclick = () => { currentQIndex = 0; score = 0; lives = 3; level = 1; renderQuestion(); };
+          return;
+        }
+        feedbackEl.textContent = '🤔 Think again!';
+        return;
+      }
+      currentQIndex++;
+      if (currentQIndex % 2 === 0 && currentQIndex > 0) level++;
+      renderQuestion();
+    };
+  }
+
+  function handleAnswer(selected, correct, btnEl) {
+    if (answered) return;
+    answered = true;
+    sound.init();
+    const allBtns = optionsEl.querySelectorAll('button');
+    allBtns.forEach(b => b.style.pointerEvents = 'none');
+    if (selected === correct) {
+      btnEl.classList.add('correct');
+      score += 10;
+      feedbackEl.textContent = '🎉 Correct!';
+      sound.correct();
+      gsap.to(mascot.position, { y:0.2, duration:0.3, yoyo:true, repeat:1 });
+      const happy = ['🎉 Excellent!', '🌟 Amazing!', '💪 Great job!', '🧠 So smart!', '🌈 Wonderful!'];
+      showSpeech(happy[Math.floor(Math.random()*happy.length)], 2500);
+      for (let i=0;i<8;i++) {
+        const el = document.createElement('div');
+        el.style.cssText = `position:fixed;pointer-events:none;z-index:9999;width:6px;height:6px;border-radius:50%;background:${['#f9c74f','#f57c9f','#a8d8ea','#ffb3c6'][Math.floor(Math.random()*4)]};top:${40+Math.random()*20}vh;left:${20+Math.random()*60}vw;`;
+        document.body.appendChild(el);
+        gsap.to(el, { x: (Math.random()-0.5)*200, y: -100, opacity:0, duration:0.8, onComplete:()=>el.remove() });
+      }
+    } else {
+      btnEl.classList.add('wrong');
+      lives -= 1;
+      feedbackEl.textContent = '😢 Oops! Try again.';
+      sound.wrong();
+      const msg = new SpeechSynthesisUtterance('Not quite');
+      msg.lang = 'en-US'; speechSynthesis.speak(msg);
+      const enc = ['😅 Try again!', '🤔 Think harder!', '💪 You can do it!', '😊 Don\'t give up!'];
+      showSpeech(enc[Math.floor(Math.random()*enc.length)], 2500);
+      allBtns.forEach((b, idx) => { if (idx === correct) b.classList.add('correct'); });
+    }
+    scoreEl.textContent = score;
+    livesEl.textContent = lives;
+    if (lives <= 0) {
+      questionEl.textContent = '💔 Oh no! Try again.';
+      optionsEl.innerHTML = '';
+      feedbackEl.textContent = '😢';
+      nextBtn.textContent = 'Restart';
+      sound.gameOver();
+      showSpeech('💪 Don\'t worry! Try again!', 3000);
+      nextBtn.onclick = () => { currentQIndex = 0; score = 0; lives = 3; level = 1; renderQuestion(); };
+    }
+  }
+
+  closePopup.addEventListener('click', () => popup.classList.remove('active'));
+  popup.addEventListener('click', (e) => { if (e.target === popup) popup.classList.remove('active'); });
+
+  // ================================================================
+  // MASCOT INTERACTIONS
+  // ================================================================
+  const mascotContainer = document.getElementById('three-canvas');
+  
+  mascotContainer.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    sound.init();
+    sound.click();
+    const reactions = [
+      { speech: '👋 Hey there!', anim: () => { gsap.to(mascot.position, { y:0.3, duration:0.3, yoyo:true, repeat:2 }); } },
+      { speech: '🎉 Let\'s have fun!', anim: () => { gsap.to(mascot.position, { y:0.4, duration:0.2, yoyo:true, repeat:3 }); sound.celebrate(); } },
+      { speech: '🧠 I\'m so smart!', anim: () => { gsap.to(mascot.rotation, { x:0.2, duration:0.2, yoyo:true, repeat:2 }); } },
+      { speech: '😄 Learning is fun!', anim: () => { gsap.to(mascot.scale, { x:1.1, y:1.1, z:1.1, duration:0.15, yoyo:true, repeat:2 }); } },
+      { speech: '🐻 Your buddy!', anim: () => { gsap.to(mascot.position, { y:0.3, duration:0.2, yoyo:true, repeat:2 }); } },
+      { speech: '⭐ You\'re a star!', anim: () => { gsap.to(mascot.scale, { x:1.15, y:1.15, z:1.15, duration:0.15, yoyo:true, repeat:2 }); sound.reward(); } },
+      { speech: '🌈 Learning is magic!', anim: () => { gsap.to(mascot.position, { y:0.35, duration:0.2, yoyo:true, repeat:3 }); } },
+      { speech: '👏 Keep going!', anim: () => { gsap.to(mascot.position, { y:0.25, duration:0.15, yoyo:true, repeat:3 }); } },
+      { speech: '💖 You\'re awesome!', anim: () => { gsap.to(mascot.rotation, { z:0.5, duration:0.15, yoyo:true, repeat:4 }); sound.celebrate(); } }
+    ];
+    const r = reactions[Math.floor(Math.random()*reactions.length)];
+    showSpeech(r.speech, 3000);
+    r.anim();
+  });
+
+  mascotContainer.addEventListener('mouseenter', () => {
+    sound.init(); sound.hover();
+    gsap.to(mascotContainer, { scale:1.03, duration:0.3 });
+    gsap.to(mascot.position, { y:0.15, duration:0.2 });
+    const msgs = ['👋 Hi!', '🐻 I\'m here!', '🌟 Click me!', '🎈 Let\'s play!'];
+    showSpeech(msgs[Math.floor(Math.random()*msgs.length)], 2000);
+    if (!isMuted) sound.startHover();
+  });
+
+  mascotContainer.addEventListener('mouseleave', () => {
+    sound.stopHover();
+    gsap.to(mascotContainer, { scale:1, duration:0.3 });
+    gsap.to(mascot.position, { y:0, duration:0.3 });
+  });
+
+  mascotContainer.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    mascotContainer.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+  });
+
+  // ================================================================
+  // REWARDS SYSTEM
+  // ================================================================
+  
+  function getRewards() {
+    const defaultData = { stars: 0, coins: 0, badges: 0, trophies: 0 };
+    try {
+      const data = JSON.parse(localStorage.getItem('kidRewards'));
+      return data ? data : defaultData;
+    } catch {
+      return defaultData;
+    }
+  }
+
+  function saveRewards(data) {
+    localStorage.setItem('kidRewards', JSON.stringify(data));
+  }
+
+  function updateRewardsDisplay() {
+    const rewards = getRewards();
+    
+    document.getElementById('starCount').textContent = rewards.stars;
+    document.getElementById('coinCount').textContent = rewards.coins;
+    document.getElementById('badgeCount').textContent = rewards.badges;
+    document.getElementById('trophyCount').textContent = rewards.trophies;
+    
+    const starPercent = Math.min((rewards.stars / 100) * 100, 100);
+    const coinPercent = Math.min((rewards.coins / 100) * 100, 100);
+    const badgePercent = Math.min((rewards.badges / 10) * 100, 100);
+    const trophyPercent = Math.min((rewards.trophies / 5) * 100, 100);
+    
+    document.getElementById('starProgress').style.width = starPercent + '%';
+    document.getElementById('coinProgress').style.width = coinPercent + '%';
+    document.getElementById('badgeProgress').style.width = badgePercent + '%';
+    document.getElementById('trophyProgress').style.width = trophyPercent + '%';
+    
+    document.getElementById('starProgressText').textContent = `${rewards.stars} / 100`;
+    document.getElementById('coinProgressText').textContent = `${rewards.coins} / 100`;
+    document.getElementById('badgeProgressText').textContent = `${rewards.badges} / 10`;
+    document.getElementById('trophyProgressText').textContent = `${rewards.trophies} / 5`;
+    
+    const ach1 = document.getElementById('achBadge1');
+    const ach2 = document.getElementById('achBadge2');
+    const ach3 = document.getElementById('achBadge3');
+    
+    if (rewards.stars >= 10) {
+      ach1.innerHTML = '⭐ Beginner';
+      ach1.style.color = '#6fcf97';
+    } else {
+      ach1.innerHTML = '🔒 Beginner (10 ⭐)';
+      ach1.style.color = '#7a6a5e';
+    }
+    
+    if (rewards.stars >= 30 && rewards.badges >= 5) {
+      ach2.innerHTML = '🌟 Explorer';
+      ach2.style.color = '#6fcf97';
+    } else {
+      ach2.innerHTML = '🔒 Explorer (30 ⭐ + 5 🎖️)';
+      ach2.style.color = '#7a6a5e';
+    }
+    
+    if (rewards.stars >= 50 && rewards.badges >= 10 && rewards.trophies >= 3) {
+      ach3.innerHTML = '🏆 Champion';
+      ach3.style.color = '#f9c74f';
+    } else {
+      ach3.innerHTML = '🔒 Champion (50 ⭐ + 10 🎖️ + 3 🏆)';
+      ach3.style.color = '#7a6a5e';
+    }
+  }
+
+  function claimDailyReward() {
+    const lastClaim = localStorage.getItem('dailyClaimed');
+    const today = new Date().toDateString();
+    
+    if (lastClaim === today) {
+      showSpeech('🎁 You already claimed today! Come back tomorrow.', 3000);
+      return;
+    }
+    
+    const rewards = getRewards();
+    rewards.stars += 5;
+    rewards.coins += 10;
+    saveRewards(rewards);
+    localStorage.setItem('dailyClaimed', today);
+    updateRewardsDisplay();
+    sound.reward();
+    showSpeech('⭐ +5 Stars! +10 Coins! Daily reward claimed!', 3000);
+    
+    for (let i=0;i<20;i++) {
+      const el = document.createElement('div');
+      el.style.cssText = `position:fixed;pointer-events:none;z-index:9999;width:10px;height:10px;border-radius:50%;background:${['#f9c74f','#f57c9f','#a8d8ea','#b8e6b8','#ffb3c6'][Math.floor(Math.random()*5)]};top:-10px;left:${Math.random()*100}vw;`;
+      document.body.appendChild(el);
+      gsap.to(el, { y:window.innerHeight+100, rotation:720, duration:2+Math.random(), ease:'power2.in', onComplete:()=>el.remove() });
+    }
+  }
+
+  updateRewardsDisplay();
+
+  document.getElementById('claimDailyBtn').addEventListener('click', claimDailyReward);
+
+  (function checkDailyReward() {
+    const lastClaim = localStorage.getItem('dailyClaimed');
+    const today = new Date().toDateString();
+    if (lastClaim !== today) {
+      setTimeout(() => {
+        showSpeech('🎁 Claim your daily reward!', 3000);
+        document.getElementById('claimDailyBtn').style.animation = 'pulse 1s ease-in-out infinite';
+      }, 2000);
+    }
+  })();
+
+  const styleSheet = document.createElement('style');
+  styleSheet.textContent = `
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+  `;
+  document.head.appendChild(styleSheet);
+
+  // ================================================================
+  // DEMO VIDEO
+  // ================================================================
+  const demoBtn = document.getElementById('demoBtn');
+  const videoPopup = document.getElementById('videoPopup');
+  const demoVideo = document.getElementById('demoVideo');
+  const closeVideo = document.getElementById('closeVideo');
+  const videoPopupTitle = document.getElementById('videoPopupTitle');
+
+  demoBtn.addEventListener('click', () => {
+    sound.click();
+    videoPopup.classList.add('active');
+    videoPopupTitle.textContent = '🎬 Counting Numbers from 1-10';
+    const playPromise = demoVideo.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {});
+    }
+  });
+
+  function closeVideoPopup() {
+    videoPopup.classList.remove('active');
+    demoVideo.pause();
+    demoVideo.currentTime = 0;
+  }
+
+  closeVideo.addEventListener('click', closeVideoPopup);
+  videoPopup.addEventListener('click', (e) => {
+    if (e.target === videoPopup) closeVideoPopup();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && videoPopup.classList.contains('active')) {
+      closeVideoPopup();
+    }
+  });
+
+  // ================================================================
+  // START BUTTON
+  // ================================================================
+  document.getElementById('startBtn').addEventListener('click', () => {
+    sound.init(); sound.celebrate();
+    gsap.to(mascot.rotation, { z:0.4, duration:0.2, yoyo:true, repeat:3 });
+    showSpeech('🎉 Let\'s start learning!', 3000);
+    for (let i=0;i<30;i++) {
+      const el = document.createElement('div');
+      el.style.cssText = `position:fixed;pointer-events:none;z-index:9999;width:12px;height:12px;border-radius:50%;background:${['#f9c74f','#f57c9f','#a8d8ea','#b8e6b8','#ffb3c6'][Math.floor(Math.random()*5)]};top:-20px;left:${Math.random()*100}vw;`;
+      document.body.appendChild(el);
+      gsap.to(el, { y:window.innerHeight+100, rotation:720, duration:2+Math.random(), ease:'power2.in', onComplete:()=>el.remove() });
+    }
+    const msg = new SpeechSynthesisUtterance('Welcome! Let\'s start learning!');
+    msg.lang = 'en-US'; speechSynthesis.speak(msg);
+    document.getElementById('activities').scrollIntoView({ behavior:'smooth' });
+  });
+
+  // ================================================================
+  // BACK TO TOP
+  // ================================================================
+  document.getElementById('backToTop').addEventListener('click', () => {
+    sound.click();
+    window.scrollTo({ top:0, behavior:'smooth' });
+  });
+
+  // ================================================================
+  // AUTO SPEECH
+  // ================================================================
+  const bubble = document.getElementById('mascotSpeech');
+  const autoMessages = [
+    '👋 Hello!', '🌟 Great job!', '🎉 Keep going!', '💪 You can do it!',
+    '🧠 Smart!', '🌈 Learning is fun!', '😊 You\'re amazing!', '⭐ Keep learning!',
+    '🎈 You\'re a star!', '🐻 I love learning!', '🎨 Creative!',
+    '🌟 You shine!', '💖 Awesome!', '🌈 Let\'s play!',
+    '🎯 Keep trying!', '🏆 Champion!', '🧸 Keep going!'
+  ];
+  setInterval(() => {
+    bubble.textContent = autoMessages[Math.floor(Math.random()*autoMessages.length)];
+    bubble.style.display = 'block';
+    gsap.fromTo(bubble, { opacity:0, y:20 }, {
+      opacity:1, y:0, duration:0.6,
+      onComplete: () => { setTimeout(() => { bubble.style.display = 'none'; }, 3000); }
+    });
+  }, 6000);
+
+  // ================================================================
+  // SCROLL OBSERVER
+  // ================================================================
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) showSpeech('🎮 Pick an activity!', 2500);
+    });
+  }, { threshold: 0.3 });
+  observer.observe(document.getElementById('activities'));
+
+  document.querySelectorAll('.activity-card').forEach(card => {
+    card.addEventListener('mouseenter', () => {
+      const name = card.querySelector('span').textContent;
+      showSpeech(`👉 Try ${name}!`, 2000);
+    });
+  });
+
+  // ================================================================
+  // KEYBOARD SHORTCUTS
+  // ================================================================
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'm' || e.key === 'M') muteBtn.click();
+    if (e.key === ' ' || e.key === 'Space') {
+      e.preventDefault();
+      document.getElementById('startBtn').click();
+    }
+    if (e.key === 'd' || e.key === 'D') {
+      document.getElementById('claimDailyBtn').click();
+    }
+    if (e.key === 'v' || e.key === 'V') {
+      demoBtn.click();
+    }
+  });
+
+  console.log('🎮 3D Kids Learning Playground loaded!');
+</script>
+</body>
+</html>
